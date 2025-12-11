@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>九州賞楓自駕行 2025</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'autumn-cream': '#FFF8E1',      // 奶油底
+                        'maple-red': '#D32F2F',         // 楓紅
+                        'gingko-gold': '#FFA000',       // 銀杏
+                        'earth-brown': '#5D4037',       // 大地褐
+                        'warm-orange': '#FF7043',       // 暖橙
+                        'matcha-green': '#558B2F',      // 抹茶綠
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body { background-color: #FFF8E1; -webkit-tap-highlight-color: transparent; font-family: 'Noto Sans TC', sans-serif; color: #5D4037; }
+        .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background-color: #ffffff; box-shadow: 0 0 30px rgba(93, 64, 55, 0.1); position: relative; padding-bottom: 90px; }
+        
+        /* Header Modified for Banner */
+        .header-bg { background-color: #ffffff; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(211, 47, 47, 0.15); border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; z-index: 10; }
+        .header-image-container { width: 100%; height: 260px; overflow: hidden; background-color: #FFECB3; position: relative; }
+        /* object-fit: cover ensures the 1920x400 image fills the area nicely without distortion */
+        .header-image-container img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        
+        /* Tab Bar */
+        .side-tab-bar { position: absolute; bottom: 45px; right: 16px; z-index: 30; display: flex; flex-direction: row; gap: 8px; }
+        .tab-button { width: 40px; height: 40px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; box-shadow: 0 4px 10px rgba(93, 64, 55, 0.2); transition: all 0.2s ease; background-color: #ffffff; color: #FFB74D; }
+        .tab-button.active { background-color: #D32F2F; color: #ffffff; box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4); transform: scale(1.05); }
+
+        .app-main { padding-top: 25px !important; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .card-shadow { box-shadow: 0 4px 20px rgba(93, 64, 55, 0.08); }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Date Selector */
+        .date-selector-sticky { background-color: #ffffff; border-bottom: 1px solid #f0f0f0; z-index: 20; top: 0; }
+        .date-active { background-color: #D32F2F !important; color: white !important; }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+
+    <div class="header-bg relative">
+        <div class="header-image-container relative">
+            <img src="images/home_banner.jpg" @error="handleImgError" alt="九州秋日旅行 Banner">
+            <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 text-white drop-shadow-md">
+                <h1 class="text-2xl font-bold">九州賞楓自駕旅</h1>
+                <p class="text-sm opacity-90">2025.12.13 - 12.21</p>
+            </div>
+        </div>
+        
+        <div class="side-tab-bar">
+            <button @click="currentTab = 'itinerary'" title="行程" :class="{'active': currentTab === 'itinerary'}" class="tab-button"><i class="fa-solid fa-map-location-dot"></i></button>
+            <button @click="currentTab = 'info'" title="住宿" :class="{'active': currentTab === 'info'}" class="tab-button"><i class="fa-solid fa-hotel"></i></button>
+            <button @click="currentTab = 'foodlist'" title="美食清單" :class="{'active': currentTab === 'foodlist'}" class="tab-button"><i class="fa-solid fa-utensils"></i></button>
+            <button @click="currentTab = 'shopping'" title="購物" :class="{'active': currentTab === 'shopping'}" class="tab-button"><i class="fa-solid fa-basket-shopping"></i></button>
+            <button @click="currentTab = 'expenses'" title="花費" :class="{'active': currentTab === 'expenses'}" class="tab-button"><i class="fa-solid fa-coins"></i></button>
+        </div>
+    </div>
+    
+    <main class="p-4 app-main">
+        
+        <div v-if="currentTab === 'itinerary'" class="animate-fade-in">
+            <div class="flex overflow-x-auto hide-scrollbar space-x-3 pb-4 mb-2 snap-x px-1 sticky date-selector-sticky pt-1 -mx-4 px-4">
+                <div v-for="(day, index) in dates" :key="index" @click="selectedDateIndex = index"
+                     class="snap-center flex-shrink-0 w-[58px] h-[68px] rounded-xl flex flex-col items-center justify-center cursor-pointer border-2 shadow-sm transition-all"
+                     :class="selectedDateIndex === index ? 'date-active shadow-lg scale-105' : 'bg-white text-stone-400 border-white'">
+                    <span class="text-sm font-bold uppercase">{{ day.weekday }}</span> 
+                    <span class="text-xs font-medium opacity-70">{{ day.date }}</span> 
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div v-for="(item, idx) in currentItinerary" :key="idx" class="relative group">
+                    <div v-if="idx > 0" class="pl-8 pb-3 flex items-center text-xs text-stone-400">
+                        <div class="h-8 w-0.5 bg-stone-200 absolute left-6 -top-4"></div>
+                        <i class="fa-solid fa-caret-down mr-2 text-stone-300"></i>
+                        <span class="font-bold">{{ item.travelTime }}</span>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl p-5 card-shadow border border-orange-100">
+                        <div class="flex items-start mb-3">
+                            <div class="mr-4 flex flex-col items-center min-w-[50px]">
+                                <div class="p-2 rounded-full text-white shadow-md text-base mb-1" :class="getCategoryColor(item.category)">
+                                    <i :class="getCategoryIcon(item.category)"></i>
+                                </div>
+                                <span class="text-xs font-bold text-stone-500 mt-1">{{ item.startTime }}</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-earth-brown leading-tight">{{ item.name }}</h3>
+                                <div class="text-sm text-stone-500 mt-1 space-y-1">
+                                    <p v-if="item.address"><i class="fa-solid fa-location-dot w-4 text-warm-orange"></i> {{ item.address }}</p>
+                                    <p v-if="item.note" class="text-xs text-stone-400 whitespace-pre-line bg-stone-50 p-2 rounded mt-2">{{ item.note }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div v-if="item.image" class="mt-2 rounded-2xl overflow-hidden shadow-sm border border-stone-100 aspect-video relative">
+                             <img :src="item.image" @error="handleImgError" class="w-full h-full object-cover">
+                        </div>
+                        
+                        <div class="absolute top-4 right-4">
+                            <button @click="openMap(item.address || item.name)" class="w-8 h-8 rounded-full bg-orange-50 text-warm-orange flex items-center justify-center hover:bg-warm-orange hover:text-white transition-colors">
+                                <i class="fa-solid fa-location-arrow text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="currentTab === 'info'" class="space-y-5 animate-fade-in">
+            <div class="bg-white rounded-3xl p-6 card-shadow">
+                <h3 class="font-bold text-earth-brown mb-4 border-b border-stone-100 pb-3"><i class="fa-solid fa-hotel text-gingko-gold mr-2"></i> 住宿列表</h3>
+                <ul class="space-y-6">
+                    <li v-for="(hotel, i) in hotels" :key="i">
+                        <div class="rounded-2xl overflow-hidden shadow-sm mb-2 aspect-video relative bg-stone-100">
+                            <img :src="hotel.image" @error="handleImgError" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 w-full bg-black/50 text-white text-xs py-1 px-3">
+                                {{ hotel.area }}
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-bold block text-earth-brown">{{ hotel.name }}</span>
+                                <span class="text-xs text-stone-400">{{ hotel.date }}</span>
+                            </div>
+                            <button @click="openMap(hotel.name)" class="text-warm-orange"><i class="fa-solid fa-location-arrow"></i></button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-3xl p-6 card-shadow">
+                <h3 class="font-bold text-earth-brown mb-3"><i class="fa-solid fa-car text-matcha-green mr-2"></i> 租車資訊</h3>
+                <p class="text-sm text-stone-600">
+                    <span class="font-bold">取車：</span>12/14 08:00 (天神渡邊通店)<br>
+                    <span class="font-bold">還車：</span>12/18 20:00 前<br>
+                    <span class="font-bold text-warm-orange">MapCode: 13 318 076*06</span>
+                </p>
+            </div>
+        </div>
+
+        <div v-if="currentTab === 'foodlist'" class="animate-fade-in">
+            <div class="bg-orange-100 rounded-2xl p-4 mb-4 text-center">
+                <h3 class="font-bold text-orange-800">美食與伴手禮清單</h3>
+                <p class="text-xs text-orange-600">必吃推薦 & 購物清單</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div v-for="(food, idx) in foodList" :key="idx" class="bg-white rounded-2xl overflow-hidden card-shadow group">
+                    <div class="h-32 w-full relative bg-stone-100">
+                        <img :src="food.image" @error="handleImgError" class="w-full h-full object-cover">
+                        <span class="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">{{ food.type }}</span>
+                    </div>
+                    <div class="p-3">
+                        <p class="font-bold text-sm text-earth-brown truncate">{{ food.name }}</p>
+                        <p class="text-xs text-stone-400 mt-1 line-clamp-2">{{ food.note }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="currentTab === 'shopping'" class="animate-fade-in">
+            <div class="bg-white rounded-3xl p-6 card-shadow">
+                <h3 class="font-bold text-earth-brown mb-4"><i class="fa-solid fa-basket-shopping text-maple-red mr-2"></i> 待買清單</h3>
+                <ul class="space-y-3">
+                    <li v-for="(item, i) in shoppingList" :key="i" class="flex items-center justify-between border-b border-stone-50 pb-2">
+                        <span>{{ item.name }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div v-if="currentTab === 'expenses'" class="animate-fade-in">
+             <div class="bg-gradient-to-r from-maple-red to-warm-orange text-white rounded-3xl p-8 shadow-lg mb-4">
+                <p class="text-sm opacity-80">總預算花費 (JPY)</p>
+                <h2 class="text-4xl font-bold">¥ {{ formatNumber(totalExpenses) }}</h2>
+            </div>
+            <div class="bg-white rounded-3xl p-6 card-shadow">
+                 <ul class="space-y-3">
+                    <li v-for="(exp, i) in expenses" :key="i" class="flex justify-between border-b border-stone-50 pb-2">
+                        <span class="text-earth-brown">{{ exp.name }}</span>
+                        <span class="font-bold">¥{{ formatNumber(exp.amount) }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </main>
+    </div>
+
+    <script>
+    const { createApp, ref, computed } = Vue
+
+    createApp({
+        setup() {
+            const currentTab = ref('itinerary');
+            const selectedDateIndex = ref(0);
+
+            // 日期設定
+            const dates = ref([
+                { date: '12/13', weekday: '六' }, { date: '12/14', weekday: '日' }, { date: '12/15', weekday: '一' },
+                { date: '12/16', weekday: '二' }, { date: '12/17', weekday: '三' }, { date: '12/18', weekday: '四' },
+                { date: '12/19', weekday: '五' }, { date: '12/20', weekday: '六' }, { date: '12/21', weekday: '日' }
+            ]);
+
+            // 1. 住宿資料
+            const hotels = ref([
+                { name: 'Cross Life 博多柳橋', date: '12/13 (1晚)', area: '福岡', image: 'images/hotel_crosslife.jpg' },
+                { name: 'Hotel Nikko Kumamoto', date: '12/14 (1晚)', area: '熊本', image: 'images/hotel_nikko.jpg' },
+                { name: '静寂な森の宿 山しのぶ', date: '12/15 (1晚)', area: '黑川溫泉', image: 'images/hotel_kurokawa.jpg' },
+                { name: 'AMANEK BEPPU YULA-RE', date: '12/16-17 (2晚)', area: '別府', image: 'images/hotel_amanek.jpg' },
+                { name: 'Tokyu Stay Fukuoka Tenjin', date: '12/18-20 (3晚)', area: '福岡天神', image: 'images/hotel_tokyustay.jpg' },
+            ]);
+
+            // 2. 每日行程資料
+            const itineraryData = ref([
+                // Day 1: 12/13
+                [
+                    { category: 'flight', startTime: '06:00', name: 'TPE 起飛', address: '桃園機場', note: '08:00 TPE ~ 11:15 FUK', image: 'images/1213_flight.jpg' },
+                    { category: 'transport', startTime: '10:00', name: '前往市區', address: '渡邊通站', note: '地鐵/放行李', travelTime: '45m' },
+                    { category: 'accommodation', startTime: '10:30', name: 'Cross Life 放行李', address: 'Cross Life 博多柳橋', note: '寄放行李', image: 'images/hotel_crosslife.jpg' },
+                    { category: 'food', startTime: '13:00', name: 'The Full Full Hakata', address: 'The Full Full Hakata', note: '明太子法國麵包', image: 'images/1213_bread.jpg' },
+                    { category: 'shopping', startTime: '14:00', name: '福岡市區逛街', address: '博多運河城', note: 'MUJI, 一番賞, 麵包超人, 櫛田神社', image: 'images/1213_canal.jpg' },
+                    { category: 'food', startTime: '17:00', name: '華味鳥水炊鍋', address: '博多華味鳥', note: '已預約 17:00', image: 'images/1213_dinner.jpg' },
+                    { category: 'food', startTime: '19:00', name: '點心/宵夜', address: '中洲川端', note: '中洲川端きりん拉麵 / 治一郎年輪蛋糕', image: 'images/1213_snack.jpg' }
+                ],
+                // Day 2: 12/14
+                [
+                    { category: 'transport', startTime: '08:00', name: '租車 (取車)', address: '天神渡邊通店', note: 'Mapcode: 13 318 076*06', image: 'images/1214_car.jpg' },
+                    { category: 'sightseeing', startTime: '09:00', name: '賞楓/銀杏', address: '太原銀杏森林', note: '秋月城跡 (Mapcode: 55 173 471*74)\n太原銀杏 (Mapcode: 37 292 372*68)', image: 'images/1214_ginkgo.jpg' },
+                    { category: 'food', startTime: '12:00', name: '勝烈亭 豬排', address: '勝烈亭 新市街本店', note: 'Mapcode: 29 459 389*34', image: 'images/1214_pork.jpg' },
+                    { category: 'sightseeing', startTime: '14:00', name: '熊本城 + 城彩苑', address: '熊本城', note: 'Mapcode: 29 489 329*60', image: 'images/1214_castle.jpg' },
+                    { category: 'shopping', startTime: '15:00', name: '市區逛街', address: '上下通商店街', note: '長崎次郎喫茶室 (Mapcode: 29 458 566*01)', image: 'images/1214_cafe.jpg' },
+                    { category: 'food', startTime: '18:00', name: '和牛塔卡', address: '和牛塔卡', note: '已訂位 18:30 (Mapcode: 29 460 452*38)', image: 'images/1214_wagyu.jpg' },
+                    { category: 'accommodation', startTime: '20:00', name: 'Check-in 日航熊本', address: 'Hotel Nikko Kumamoto', note: 'Mapcode: 29 490 018*61', image: 'images/hotel_nikko.jpg' }
+                ],
+                // Day 3: 12/15
+                [
+                    { category: 'sightseeing', startTime: '09:00', name: '天岩戶神社', address: '天岩戶神社', note: 'Mapcode: 330 837 641*24', image: 'images/1215_shrine.jpg' },
+                    { category: 'food', startTime: '11:00', name: '高千穗牛_和', address: '高千穗牛餐廳 和', note: 'Mapcode: 330 742 450*53', image: 'images/1215_beef.jpg' },
+                    { category: 'sightseeing', startTime: '12:00', name: '高千穗峽 (划船)', address: '高千穗峽', note: '預約 12:00 划船 (Mapcode: 330 711 671*87)', image: 'images/1215_boat.jpg' },
+                    { category: 'sightseeing', startTime: '14:30', name: '上色見熊野座神社', address: '上色見熊野座神社', note: 'Mapcode: 256 379 371*35', image: 'images/1215_kumano.jpg' },
+                    { category: 'food', startTime: '18:00', name: '懷石料理', address: '山しのぶ', note: '18:30 晚餐', image: 'images/hotel_kurokawa.jpg' },
+                    { category: 'sightseeing', startTime: '19:00', name: '黑川溫泉散策', address: '黑川溫泉', note: 'Patisserie Roku 泡芙', image: 'images/1215_street.jpg' }
+                ],
+                // Day 4: 12/16
+                [
+                    { category: 'sightseeing', startTime: '09:00', name: '阿蘇火山口', address: '阿蘇山火口', note: '直升機 (Mapcode: 256 460 704*02)', image: 'images/1216_aso.jpg' },
+                    { category: 'sightseeing', startTime: '12:00', name: '草千里', address: '草千里', note: '騎馬/午餐', image: 'images/1216_grass.jpg' },
+                    { category: 'food', startTime: '14:00', name: '阿蘇神社', address: '阿蘇神社', note: '阿蘇牛奶/泡芙 (Mapcode: 256 704 305*31)', image: 'images/1216_milk.jpg' },
+                    { category: 'transport', startTime: '15:00', name: '前往別府', address: '九重夢大橋', note: '途經吊橋 (Mapcode: 269 012 310*75)', image: 'images/1216_bridge.jpg' },
+                    { category: 'food', startTime: '17:00', name: '天婦羅 とよ常', address: 'とよ常 本店', note: 'Mapcode: 46 405 225*67', image: 'images/1216_dinner.jpg' },
+                    { category: 'accommodation', startTime: '19:00', name: 'Check-in AMANEK', address: 'AMANEK BEPPU YULA-RE', note: 'Mapcode: 46 405 228*51', image: 'images/hotel_amanek.jpg' }
+                ],
+                // Day 5: 12/17
+                [
+                    { category: 'food', startTime: '07:00', name: 'Cafe La Ruche', address: '金鱗湖畔', note: '湖畔早餐 (Mapcode: 269 359 616*04)', image: 'images/1217_breakfast.jpg' },
+                    { category: 'sightseeing', startTime: '09:00', name: '別府地獄 / 布丁', address: '海地獄', note: '海地獄 (Mapcode: 46 521 469*64)\n岡本屋布丁', image: 'images/1217_hell.jpg' },
+                    { category: 'sightseeing', startTime: '10:30', name: '狭霧台', address: '狭霧台', note: '眺望由布院 (Mapcode: 46 301 725*70)', image: 'images/1217_view.jpg' },
+                    { category: 'food', startTime: '12:00', name: '由布院午餐', address: '由布まぶし 心', note: '布釜飯 或 蕎麥麵', image: 'images/1217_lunch.jpg' },
+                    { category: 'sightseeing', startTime: '13:00', name: '由布院散策', address: '湯之坪街道', note: 'Milch布丁 / B-speak', image: 'images/1217_street.jpg' },
+                    { category: 'food', startTime: '17:00', name: '海鮮いづつ', address: '別府市區', note: '海鮮晚餐 (Mapcode: 46 375 716*53)', image: 'images/1217_dinner.jpg' },
+                    { category: 'sightseeing', startTime: '19:00', name: '湯霧展望台', address: '湯霧展望台', note: '夜景 (Mapcode: 46 523 435*11)', image: 'images/1217_nightview.jpg' }
+                ],
+                // Day 6: 12/18
+                [
+                    { category: 'sightseeing', startTime: '09:00', name: '九州自然動物園', address: '九州自然動物園', note: 'Jungle Bus (Mapcode: 46 634 658*87)', image: 'images/1218_zoo.jpg' },
+                    { category: 'transport', startTime: '14:00', name: '返回福岡', address: '福岡', note: '開車約 2-2.5 小時', travelTime: '2h30m' },
+                    { category: 'transport', startTime: '17:00', name: '還車', address: '天神渡邊通店', note: '20:00 前還車', image: 'images/1218_return_car.jpg' },
+                    { category: 'food', startTime: '18:00', name: '晚餐/逛街', address: '天神周邊', note: '博多牛腸鍋', image: 'images/1218_dinner.jpg' },
+                    { category: 'accommodation', startTime: '20:00', name: 'Check-in Tokyu Stay', address: 'Tokyu Stay Fukuoka Tenjin', note: 'Mapcode: 13 318 296*24', image: 'images/hotel_tokyustay.jpg' }
+                ],
+                // Day 7: 12/19
+                [
+                    { category: 'transport', startTime: '08:00', name: '前往門司港', address: '門司港', note: 'JR: 博多 > 小倉 > 門司港', image: 'images/1219_train.jpg' },
+                    { category: 'sightseeing', startTime: '10:00', name: '門司港懷舊區', address: '門司港車站', note: '車站/藍翼橋/舊稅關', image: 'images/1219_mojiko.jpg' },
+                    { category: 'food', startTime: '12:00', name: '伽哩本舖', address: '伽哩本舖', note: '燒咖哩', image: 'images/1219_curry.jpg' },
+                    { category: 'sightseeing', startTime: '13:00', name: '小倉城', address: '小倉城', note: '賞楓', image: 'images/1219_kokura.jpg' },
+                    { category: 'food', startTime: '18:00', name: '鰻魚 田舍庵', address: '田舍庵 小倉本店', note: '鰻魚飯晚餐', image: 'images/1219_eel.jpg' }
+                ],
+                // Day 8: 12/20
+                [
+                    { category: 'sightseeing', startTime: '09:00', name: '太宰府天滿宮', address: '太宰府天滿宮', note: '梅枝餅/光明禪寺', image: 'images/1220_dazaifu.jpg' },
+                    { category: 'food', startTime: '12:00', name: '明太子 神樂', address: '太宰府', note: '行程指定午餐', image: 'images/1220_lunch.jpg' },
+                    { category: 'sightseeing', startTime: '14:00', name: 'TeamLab / 福岡塔', address: 'BOSS E・ZO', note: '福岡市區觀光', image: 'images/1220_teamlab.jpg' },
+                    { category: 'food', startTime: '18:00', name: '燒肉 上 (Jo)', address: '燒肉 上', note: '行程指定晚餐', image: 'images/1220_dinner.jpg' }
+                ],
+                // Day 9: 12/21
+                [
+                    { category: 'food', startTime: '06:00', name: '早餐巡禮', address: '大砲/一双/ShinShin', note: '拉麵當早餐', image: 'images/1221_ramen.jpg' },
+                    { category: 'food', startTime: '08:00', name: 'I\'m donut? / 麵包', address: 'I\'m donut?', note: '排隊甜甜圈', image: 'images/1221_donut.jpg' },
+                    { category: 'shopping', startTime: '10:00', name: '最後採買', address: '大濠公園/天神', note: '努努雞/饅頭', image: 'images/1221_park.jpg' },
+                    { category: 'food', startTime: '12:30', name: '人形町今半', address: '博多車站', note: '壽喜燒午餐', image: 'images/1221_sukiyaki.jpg' },
+                    { category: 'transport', startTime: '17:00', name: '前往機場', address: '福岡機場', note: 'FUK ~ TPE', image: 'images/1221_home.jpg' }
+                ]
+            ]);
+
+            // 3. 必吃與伴手禮清單
+            const foodList = ref([
+                { name: '博多一双', type: '拉麵', note: '泡沫系豚骨', image: 'images/food_issou.jpg' },
+                { name: 'ShinShin', type: '拉麵', note: '藝人最愛', image: 'images/food_shinshin.jpg' },
+                { name: '大砲拉麵', type: '拉麵', note: '久留米系', image: 'images/food_taihou.jpg' },
+                { name: '大東園 本店', type: '燒肉', note: '人氣燒肉', image: 'images/food_daitouen.jpg' },
+                { name: 'Nikuichi', type: '燒肉', note: '和牛燒肉', image: 'images/food_nikuichi.jpg' },
+                { name: '博多牛腸鍋', type: '鍋物', note: '山中 / 一藤', image: 'images/food_motsunabe.jpg' },
+                { name: '法國蛋糕 16區', type: '甜點', note: '達克瓦茲', image: 'images/food_16ku.jpg' },
+                { name: '鈴懸', type: '甜點', note: '精緻和菓子', image: 'images/food_suzukake.jpg' },
+                { name: 'Manly', type: '甜點', note: '舒芙蕾鬆餅', image: 'images/food_manly.jpg' },
+                { name: 'Cafe Tenjosajiki', type: '咖啡', note: '由布院龜之井別莊', image: 'images/food_tenjosajiki.jpg' },
+                { name: '努努雞', type: '伴手禮', note: '冷炸雞', image: 'images/food_nunuchicken.jpg' },
+                { name: '小雞饅頭', type: '伴手禮', note: '吉野堂', image: 'images/food_hiyoko.jpg' },
+                { name: '筑紫麻糬', type: '伴手禮', note: '如信玄餅', image: 'images/food_mochi.jpg' }
+            ]);
+
+            const shoppingList = ref([
+                { name: '合利他命', note: '藥妝' }, { name: '茅乃舍高湯', note: '博多站' },
+                { name: '熊本熊周邊', note: '熊本' }, { name: 'B-speak 蛋糕捲', note: '由布院' }
+            ]);
+
+            const expenses = ref([
+                { name: '機票 (預估)', amount: 45000 }, { name: 'Cross Life', amount: 21246 },
+                { name: '日航熊本', amount: 9694 }, { name: '山しのぶ', amount: 27407 },
+                { name: 'AMANEK 別府', amount: 27914 }, { name: 'Tokyu Stay', amount: 60134 },
+                { name: '租車費', amount: 35000 }, { name: '餐費預估', amount: 80000 }
+            ]);
+
+            const currentItinerary = computed(() => itineraryData.value[selectedDateIndex.value] || []);
+            const totalExpenses = computed(() => expenses.value.reduce((a, b) => a + b.amount, 0));
+            
+            const formatNumber = (num) => num.toLocaleString();
+            const openMap = (q) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, '_blank');
+            const getCategoryColor = (c) => ({ flight: 'bg-blue-500', food: 'bg-maple-red', sightseeing: 'bg-matcha-green', shopping: 'bg-gingko-gold', accommodation: 'bg-stone-500', transport: 'bg-warm-orange' }[c] || 'bg-stone-400');
+            const getCategoryIcon = (c) => ({ flight: 'fa-plane', food: 'fa-utensils', sightseeing: 'fa-camera', shopping: 'fa-bag-shopping', accommodation: 'fa-bed', transport: 'fa-car' }[c] || 'fa-circle');
+            const handleImgError = (e) => { e.target.src = 'https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image'; };
+
+            return {
+                currentTab, dates, selectedDateIndex, currentItinerary, hotels, foodList, shoppingList, expenses, totalExpenses,
+                formatNumber, openMap, getCategoryColor, getCategoryIcon, handleImgError
+            };
+        }
+    }).mount('#app');
+    </script>
+</body>
+</html>
